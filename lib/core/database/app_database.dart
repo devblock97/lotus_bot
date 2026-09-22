@@ -1,0 +1,42 @@
+import 'package:drift/drift.dart';
+import 'package:drift_flutter/drift_flutter.dart';
+import 'package:lotus_ai/core/database/tables/app_settings_table.dart';
+import 'package:lotus_ai/core/database/tables/conversation_table.dart';
+import 'package:lotus_ai/core/database/tables/message_table.dart';
+
+part 'app_database.g.dart';
+
+@DriftDatabase(
+  tables: [
+    ConversationTable,
+    MessageTable,
+    AppSettingsTable,
+  ],
+)
+class AppDatabase extends _$AppDatabase {
+  AppDatabase() : super(_openConnection());
+
+  AppDatabase.forTesting(super.e);
+
+  @override
+  int get schemaVersion => 1;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) async {
+          await m.createAll();
+        },
+        onUpgrade: (m, from, to) async {
+          if (from < to) {
+            for (final table in allTables) {
+              await m.deleteTable(table.actualTableName);
+            }
+            await m.createAll();
+          }
+        },
+      );
+
+  static QueryExecutor _openConnection() {
+    return driftDatabase(name: 'lotus_ai_db');
+  }
+}
