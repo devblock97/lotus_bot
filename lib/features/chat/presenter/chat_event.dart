@@ -27,11 +27,12 @@ class MessagesUpdatedEvent extends ChatEvent {
 }
 
 class SendMessageEvent extends ChatEvent {
-  const SendMessageEvent(this.text);
+  const SendMessageEvent(this.text, {this.attachedImagePath});
   final String text;
+  final String? attachedImagePath;
 
   @override
-  List<Object?> get props => [text];
+  List<Object?> get props => [text, attachedImagePath];
 }
 
 class StreamChunkEvent extends ChatEvent {

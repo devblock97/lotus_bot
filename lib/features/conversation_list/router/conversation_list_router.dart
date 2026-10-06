@@ -7,6 +7,7 @@ import 'package:lotus_ai/features/conversation_list/interactor/conversation_list
 import 'package:lotus_ai/features/conversation_list/presenter/conversation_list_bloc.dart';
 import 'package:lotus_ai/features/conversation_list/view/adaptive_home_screen.dart';
 import 'package:lotus_ai/features/conversation_list/view/conversation_list_screen.dart';
+import 'package:lotus_ai/features/invoice_ocr/router/invoice_ocr_router.dart';
 import 'package:lotus_ai/features/settings/interactor/settings_interactor.dart';
 import 'package:lotus_ai/features/settings/router/settings_router.dart';
 
@@ -88,5 +89,10 @@ class ConversationListRouter {
         MaterialPageRoute<void>(builder: (_) => settingsView),
       );
     }
+  }
+
+  /// Navigates to the Invoice & Receipt OCR Scanner.
+  void openInvoiceOcr(BuildContext context) {
+    InvoiceOcrRouter.navigateTo(context);
   }
 }

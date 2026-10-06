@@ -1,17 +1,24 @@
+import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_ai/core/database/app_database.dart';
 import 'package:lotus_ai/core/network/dio_client.dart';
 import 'package:lotus_ai/core/services/ai/ai_provider_registry.dart';
+import 'package:lotus_ai/core/services/ocr/ocr_service.dart';
 import 'package:lotus_ai/features/chat/interactor/chat_interactor.dart';
 import 'package:lotus_ai/features/chat/interactor/chat_local_data_source.dart';
 import 'package:lotus_ai/features/chat/interactor/chat_repository.dart';
 import 'package:lotus_ai/features/chat/presenter/chat_bloc.dart';
 import 'package:lotus_ai/features/chat/presenter/chat_event.dart';
 import 'package:lotus_ai/features/conversation_list/interactor/conversation_list_interactor.dart';
+import 'package:lotus_ai/features/invoice_ocr/entity/invoice_ocr_result.dart';
 import 'package:lotus_ai/features/settings/interactor/settings_local_data_source.dart';
+import 'package:mocktail/mocktail.dart';
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(File('dummy.jpg'));
+  });
   late AppDatabase db;
   late ChatLocalDataSource chatLocalDS;
   late SettingsLocalDataSource settingsDS;
@@ -117,5 +124,42 @@ void main() {
 
       await bloc.close();
     });
+
+    test('ChatBloc sendMessage with attached invoice triggers on-device OCR and AI extraction', () async {
+      final mockOcr = MockOcrService();
+      when(() => mockOcr.processImage(any())).thenAnswer(
+        (_) async => const InvoiceOcrResult(
+          rawText: 'Starbucks Coffee\nTotal: \$5.50\nDate: 2026-10-05',
+          blocks: [],
+        ),
+      );
+
+      final ocrChatInteractor = ChatInteractor(
+        repository: chatRepo,
+        ocrService: mockOcr,
+      );
+
+      final conv = await convListInteractor.createConversation(title: 'Invoice Test');
+      final bloc = ChatBloc(
+        interactor: ocrChatInteractor,
+        initialConversationId: conv.id,
+      );
+
+      bloc.add(const SendMessageEvent('Analyze this bill', attachedImagePath: 'sample_bill.jpg'));
+
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(bloc.state.isGenerating, isTrue);
+
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      expect(bloc.state.isGenerating, isFalse);
+
+      final storedMsgs = await chatRepo.getMessages(conv.id);
+      expect(storedMsgs.first.content, contains('[INVOICE_IMAGE:sample_bill.jpg]'));
+      expect(storedMsgs.first.content, contains('Analyze this bill'));
+
+      await bloc.close();
+    });
   });
 }
+
+class MockOcrService extends Mock implements OcrService {}

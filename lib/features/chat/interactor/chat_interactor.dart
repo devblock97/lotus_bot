@@ -1,13 +1,24 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:lotus_ai/core/services/ocr/ocr_service.dart';
 import 'package:lotus_ai/features/chat/entity/conversation.dart';
 import 'package:lotus_ai/features/chat/entity/message.dart';
 import 'package:lotus_ai/features/chat/interactor/chat_repository.dart';
+import 'package:lotus_ai/features/invoice_ocr/entity/invoice_ocr_result.dart';
 
 class ChatInteractor {
-  ChatInteractor({required ChatRepository repository})
-      : _repository = repository;
+  ChatInteractor({
+    required ChatRepository repository,
+    OcrService? ocrService,
+  })  : _repository = repository,
+        _ocrService = ocrService ?? MlKitOcrService();
 
   final ChatRepository _repository;
+  final OcrService _ocrService;
+
+  /// Runs on-device OCR on the attached invoice image
+  Future<InvoiceOcrResult> extractInvoiceText(File imageFile) =>
+      _ocrService.processImage(imageFile);
 
   Stream<List<Message>> watchMessages(String conversationId) =>
       _repository.watchMessages(conversationId);

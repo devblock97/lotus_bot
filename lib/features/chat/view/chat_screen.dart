@@ -294,8 +294,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: ChatInputField(
                     isGenerating: state.isGenerating,
                     initialText: state.draftInput,
-                    onSend: (text) =>
-                        context.read<ChatBloc>().add(SendMessageEvent(text)),
+                    onSend: (text, {attachedImagePath}) => context
+                        .read<ChatBloc>()
+                        .add(SendMessageEvent(text, attachedImagePath: attachedImagePath)),
                     onStop: () => context
                         .read<ChatBloc>()
                         .add(const StopGenerationEvent()),
