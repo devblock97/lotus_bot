@@ -62,6 +62,11 @@ class ConversationListScreen extends StatelessWidget {
                       ),
                     ),
                     IconButton(
+                      icon: const Icon(Icons.document_scanner_outlined, size: 20),
+                      tooltip: 'Scan Invoices & Receipts',
+                      onPressed: () => router.openInvoiceOcr(context),
+                    ),
+                    IconButton(
                       icon: const Icon(Icons.tune_rounded, size: 20),
                       tooltip: 'AI Engine Settings',
                       onPressed: () => router.openSettings(context),
@@ -204,6 +209,11 @@ class ConversationListScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.document_scanner_outlined),
+            tooltip: 'Scan Invoices & Receipts',
+            onPressed: () => router.openInvoiceOcr(context),
+          ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Settings & AI Engines',

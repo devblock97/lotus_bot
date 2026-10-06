@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -25,13 +26,29 @@ class MessageBubble extends StatelessWidget {
     final timeStr = DateFormat('h:mm a').format(message.timestamp);
 
     if (isUser) {
+      final content = message.content;
+      String? imagePath;
+      String displayText = content;
+
+      if (content.startsWith('[INVOICE_IMAGE:') && content.contains(']\n')) {
+        final endIndex = content.indexOf(']\n');
+        imagePath = content.substring('[INVOICE_IMAGE:'.length, endIndex);
+        displayText = content.substring(endIndex + 2);
+      } else if (content.startsWith('[INVOICE_IMAGE:') && content.endsWith(']')) {
+        imagePath =
+            content.substring('[INVOICE_IMAGE:'.length, content.length - 1);
+        displayText = '';
+      }
+
+      final hasImage = imagePath != null && File(imagePath).existsSync();
+
       return Padding(
         padding: const EdgeInsets.only(left: 56, right: 16, top: 6, bottom: 6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: chatTheme?.userBubbleBg ?? Colors.black,
                 borderRadius: const BorderRadius.only(
@@ -41,13 +58,61 @@ class MessageBubble extends StatelessWidget {
                   bottomRight: Radius.circular(4),
                 ),
               ),
-              child: Text(
-                message.content,
-                style: TextStyle(
-                  color: chatTheme?.userBubbleFg ?? Colors.white,
-                  fontSize: 15,
-                  height: 1.4,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (hasImage) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 220),
+                        child: Image.file(
+                          File(imagePath),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.receipt_long_rounded,
+                            size: 13,
+                            color: chatTheme?.userBubbleFg ?? Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Invoice Attached',
+                            style: TextStyle(
+                              color: chatTheme?.userBubbleFg ?? Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (displayText.isNotEmpty) const SizedBox(height: 8),
+                  ],
+                  if (displayText.isNotEmpty)
+                    Text(
+                      displayText,
+                      style: TextStyle(
+                        color: chatTheme?.userBubbleFg ?? Colors.white,
+                        fontSize: 15,
+                        height: 1.4,
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 4),
